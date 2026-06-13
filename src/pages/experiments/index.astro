@@ -1,0 +1,56 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { byNewestExperiment, byNewestLog, formatDate, getStatusLabel } from "../../lib/experiments";
+
+const experiments = (await getCollection("experiments", ({ data }) => !data.draft)).sort(byNewestExperiment);
+const logs = (await getCollection("experimentLogs", ({ data }) => !data.draft)).sort(byNewestLog);
+const latestLogByExperiment = new Map(logs.map((log) => [log.data.experiment, log]));
+---
+
+<BaseLayout
+  title="Tiny Experiments | wolkengrube.de"
+  description="A public lab notebook for small technical experiments, commitments, and field notes."
+>
+  <section class="page-header" aria-labelledby="experiments-title">
+    <p class="section-kicker">Tiny experiments</p>
+    <h1 id="experiments-title">Public lab notebook</h1>
+    <p>
+      Small experiments, reviewed field notes, and useful traces from AI-assisted
+      engineering, systems work, and cloud workflows.
+    </p>
+  </section>
+
+  <section class="lab-section lab-section--wide" aria-label="Experiment index">
+    <div class="experiment-table experiment-table--index" role="table" aria-label="Tiny experiments">
+      <div class="experiment-table__head" role="row">
+        <span role="columnheader">Experiment</span>
+        <span role="columnheader">Status</span>
+        <span role="columnheader">Cadence</span>
+        <span role="columnheader">Last note</span>
+        <span role="columnheader">Next</span>
+      </div>
+      {
+        experiments.map((experiment) => {
+          const latestLog = latestLogByExperiment.get(experiment.id);
+          return (
+            <a class="experiment-row experiment-row--index" href={`/experiments/${experiment.id}`} role="row">
+              <span role="cell">
+                <strong>{experiment.data.title}</strong>
+                <small>{experiment.data.summary}</small>
+              </span>
+              <span role="cell">
+                <mark class={`status-pill status-pill--${experiment.data.status}`}>
+                  {getStatusLabel(experiment.data.status)}
+                </mark>
+              </span>
+              <span role="cell">{experiment.data.cadence}</span>
+              <span role="cell">{latestLog ? formatDate(latestLog.data.date) : "No notes yet"}</span>
+              <span role="cell">{experiment.data.next ?? "Shape the next small test"}</span>
+            </a>
+          );
+        })
+      }
+    </div>
+  </section>
+</BaseLayout>
