@@ -1,0 +1,119 @@
+---
+import { getCollection, render, type CollectionEntry } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { byNewestLog, formatDate, getStatusLabel } from "../../lib/experiments";
+
+export async function getStaticPaths() {
+  const experiments = await getCollection("experiments", ({ data }) => !data.draft);
+
+  return experiments.map((experiment) => ({
+    params: { slug: experiment.id },
+    props: { experiment },
+  }));
+}
+
+interface Props {
+  experiment: CollectionEntry<"experiments">;
+}
+
+const { experiment } = Astro.props;
+const { Content } = await render(experiment);
+const logs = (await getCollection(
+  "experimentLogs",
+  ({ data }) => !data.draft && data.experiment === experiment.id,
+)).sort(byNewestLog);
+---
+
+<BaseLayout
+  title={`${experiment.data.title} | Tiny Experiments`}
+  description={experiment.data.summary}
+>
+  <article class="experiment-detail">
+    <header class="page-header page-header--detail">
+      <p class="section-kicker">Tiny experiment</p>
+      <h1>{experiment.data.title}</h1>
+      <p>{experiment.data.summary}</p>
+      <div class="experiment-meta" aria-label="Experiment metadata">
+        <span>
+          <strong>Status</strong>
+          <mark class={`status-pill status-pill--${experiment.data.status}`}>
+            {getStatusLabel(experiment.data.status)}
+          </mark>
+        </span>
+        <span>
+          <strong>Started</strong>
+          {formatDate(experiment.data.startedAt)}
+        </span>
+        <span>
+          <strong>Cadence</strong>
+          {experiment.data.cadence}
+        </span>
+      </div>
+    </header>
+
+    <section class="detail-grid" aria-label="Experiment framing">
+      <div>
+        <p class="section-kicker">Mission</p>
+        <p>{experiment.data.mission}</p>
+      </div>
+      <div>
+        <p class="section-kicker">Commitment</p>
+        <p>{experiment.data.commitment}</p>
+      </div>
+    </section>
+
+    <section class="prose">
+      <Content />
+    </section>
+
+    {
+      experiment.data.learned.length > 0 && (
+        <section class="learning-list" aria-labelledby="learned-title">
+          <p class="section-kicker">Interesting aspects</p>
+          <h2 id="learned-title">What this is teaching me</h2>
+          <ul>
+            {experiment.data.learned.map((item) => (
+              <li>{item}</li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    <section class="logbook" aria-labelledby="logbook-title">
+      <div class="section-heading section-heading--split">
+        <div>
+          <p class="section-kicker">Field notes</p>
+          <h2 id="logbook-title">Reviewed public entries</h2>
+        </div>
+        <a class="text-link" href="/experiments">All experiments</a>
+      </div>
+
+      {
+        logs.length > 0 ? (
+          <div class="log-list">
+            {logs.map((log) => (
+              <article class="log-entry">
+                <time datetime={log.data.date.toISOString()}>{formatDate(log.data.date)}</time>
+                <h3>{log.data.title}</h3>
+                <p>{log.data.summary}</p>
+                {log.data.learned.length > 0 && (
+                  <ul>
+                    {log.data.learned.map((item) => (
+                      <li>{item}</li>
+                    ))}
+                  </ul>
+                )}
+                <p class="next-step">
+                  <strong>Next:</strong> {log.data.next}
+                </p>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p class="empty-note">No reviewed public notes yet.</p>
+        )
+      }
+    </section>
+  </article>
+</BaseLayout>

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Tiny Experiment Log"
+  short_description: "Turn private sessions into reviewed public experiment notes."
+  default_prompt: "Summarize this experiment session into a polished public lab note."

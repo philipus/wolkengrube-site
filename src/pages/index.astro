@@ -1,0 +1,135 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { byNewestExperiment, byNewestLog, formatDate, getStatusLabel } from "../lib/experiments";
+
+const experiments = (await getCollection("experiments", ({ data }) => !data.draft))
+  .sort(byNewestExperiment)
+  .slice(0, 4);
+
+const logs = (await getCollection("experimentLogs", ({ data }) => !data.draft)).sort(byNewestLog);
+const latestLogByExperiment = new Map(logs.map((log) => [log.data.experiment, log]));
+---
+
+<BaseLayout>
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero__copy">
+      <p class="eyebrow">wolkengrube.de</p>
+      <h1 id="hero-title">Data / AI / Systems</h1>
+      <p class="hero__lead">
+        Turning data into insight. Building systems that work.
+      </p>
+      <div class="code-note" aria-label="Short code note">
+        <span>def explore(system):</span>
+        <span>model = learn(system)</span>
+        <span>return build(model)</span>
+      </div>
+    </div>
+
+    <div class="system-visual" aria-hidden="true">
+      <div class="cloud-core"></div>
+      <span class="node node--one"></span>
+      <span class="node node--two"></span>
+      <span class="node node--three"></span>
+      <span class="stream stream--one"></span>
+      <span class="stream stream--two"></span>
+      <span class="stream stream--three"></span>
+      <span class="stream stream--four"></span>
+    </div>
+  </section>
+
+  <section class="intro section-panel" aria-labelledby="intro-title">
+    <p class="section-kicker">Short intro</p>
+    <h2 id="intro-title">A small place for technical notes from the cloud layer.</h2>
+    <p>
+      I write about AI-assisted engineering, data platforms, infrastructure,
+      and the practical architecture decisions that happen between idea,
+      notebook, pipeline, cluster, and production.
+    </p>
+  </section>
+
+  <section class="themes" aria-labelledby="themes-title">
+    <div class="section-heading">
+      <p class="section-kicker">Current themes</p>
+      <h2 id="themes-title">What I am tracing right now</h2>
+    </div>
+
+    <div class="theme-grid">
+      <article>
+        <h3>AI systems</h3>
+        <p>Agents, evaluation loops, model boundaries, and useful automation.</p>
+      </article>
+      <article>
+        <h3>AI-assisted coding</h3>
+        <p>Working with coding agents, review habits, and human-in-the-loop flow.</p>
+      </article>
+      <article>
+        <h3>Cloud native architectures</h3>
+        <p>Workflows, Kubernetes patterns, deployment paths, and observability.</p>
+      </article>
+      <article>
+        <h3>Databricks</h3>
+        <p>Lakehouse workflows, notebooks, jobs, governance, and platform habits.</p>
+      </article>
+      <article>
+        <h3>Analytics architecture</h3>
+        <p>From raw signals to governed datasets, usable models, and calm operations.</p>
+      </article>
+      <article>
+        <h3>Tiny experiments</h3>
+        <p>Small tests, notes, migrations, and repeatable discoveries in public.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="lab-section" aria-labelledby="experiments-title">
+    <div class="section-heading section-heading--split">
+      <div>
+        <p class="section-kicker">Tiny experiments</p>
+        <h2 id="experiments-title">Public lab notebook</h2>
+      </div>
+      <a class="text-link" href="/experiments">Open the lab</a>
+    </div>
+
+    <div class="experiment-table" role="table" aria-label="Tiny experiments">
+      <div class="experiment-table__head" role="row">
+        <span role="columnheader">Experiment</span>
+        <span role="columnheader">Status</span>
+        <span role="columnheader">Last note</span>
+        <span role="columnheader">Next</span>
+      </div>
+      {
+        experiments.map((experiment) => {
+          const latestLog = latestLogByExperiment.get(experiment.id);
+          return (
+            <a class="experiment-row" href={`/experiments/${experiment.id}`} role="row">
+              <span role="cell">
+                <strong>{experiment.data.title}</strong>
+                <small>{experiment.data.mission}</small>
+              </span>
+              <span role="cell">
+                <mark class={`status-pill status-pill--${experiment.data.status}`}>
+                  {getStatusLabel(experiment.data.status)}
+                </mark>
+              </span>
+              <span role="cell">{latestLog ? formatDate(latestLog.data.date) : "No notes yet"}</span>
+              <span role="cell">{experiment.data.next ?? "Shape the next small test"}</span>
+            </a>
+          );
+        })
+      }
+    </div>
+  </section>
+
+  <section class="social" aria-labelledby="social-title">
+    <div>
+      <p class="section-kicker">Social links</p>
+      <h2 id="social-title">Find the live thread</h2>
+    </div>
+    <nav class="social-links" aria-label="Social links">
+      <a href="https://x.com/wolkengrube">X</a>
+      <a href="https://github.com/philipus">GitHub</a>
+      <a href="mailto:hello@wolkengrube.de">Email</a>
+    </nav>
+  </section>
+</BaseLayout>
