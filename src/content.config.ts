@@ -5,7 +5,7 @@ import { z } from "astro/zod";
 const experimentStatus = z.enum(["proposed", "active", "paused", "completed"]);
 
 const experiments = defineCollection({
-  loader: glob({ base: "./src/content/experiments", pattern: "**/*.{md,mdx}" }),
+  loader: glob({ base: "./src/content/experiments", pattern: "**/*.md" }),
   schema: z.object({
     title: z.string(),
     summary: z.string(),
@@ -23,7 +23,7 @@ const experiments = defineCollection({
 });
 
 const experimentLogs = defineCollection({
-  loader: glob({ base: "./src/content/experimentLogs", pattern: "**/*.{md,mdx}" }),
+  loader: glob({ base: "./src/content/experimentLogs", pattern: "**/*.md" }),
   schema: z.object({
     title: z.string(),
     experiment: z.string(),
